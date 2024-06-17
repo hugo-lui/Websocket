@@ -31,6 +31,11 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Client connected")
 
+	err = ws.WriteMessage(1, []byte("HI"))
+	if err != nil {
+		log.Println(err)
+	}
+
 	reader(ws)
 }
 
