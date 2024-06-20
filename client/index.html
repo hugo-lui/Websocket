@@ -1,32 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Go WebSocket</title>
-  </head>
-  <body>
-    <h2>Hello World</h2>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Go WebSocket</title>
+    </head>
+    <body>
+        <h2>Hello World</h2>
 
-    <script>
-        let socket = new WebSocket("ws://127.0.0.1:8080/ws");
-        console.log("Attempting Connection...");
+        <script>
+            let socket = new WebSocket("ws://127.0.0.1:8080/ws");
+            console.log("Attempting Connection...");
 
-        socket.onopen = () => {
-            console.log("Successfully Connected");
-            socket.send("Hi From the Client!")
-        };
+            class Event {
+                constructor(type, payload) {
+                    this.type = type;
+                    this.payload = payload;
+                }
+            }
+
+            routeEvent = event => {
+                if(event.type === undefined) {
+                    alert("No message type");
+                }
+                switch(event.type) {
+                    case "message":
+                        console.log("New message");
+                        break;
+                    default:
+                        alert("Unsupported message");
+                        break;
+                }
+            }
+
+            sendEvent = (type, payload) => {
+                const event = new Event(type, payload);
+                socket.send(JSON.stringify(event));
+            }
+
+            sendMessage = () => {
+                sendEvent("sendMessage", "hehe");
+            }
+
+            socket.onmessage = e => {
+                const eventData = JSON.parse(e.data);
+                const event = Object.assign(new Event, eventData);
+                routeEvent(event);
+            };
+
+            socket.onopen = () => {
+                console.log("Successfully Connected");
+                socket.send("Hi From the Client!");
+            };
         
-        socket.onclose = event => {
-            console.log("Socket Closed Connection: ", event);
-            socket.send("Client Closed!")
-        };
+            socket.onclose = event => {
+                console.log("Socket Closed Connection: ", event);
+                socket.send("Client Closed!");
+            };
 
-        socket.onerror = error => {
-            console.log("Socket Error: ", error);
-        };
+            socket.onerror = error => {
+                console.log("Socket Error: ", error);
+            };
 
-    </script>
-  </body>
+        </script>
+    </body>
 </html>

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"sync"
@@ -16,12 +17,36 @@ var upgrader = websocket.Upgrader{
 type Manager struct {
 	clients ClientList
 	sync.RWMutex
+	handlers map[string]EventHandler
 }
 
 func newManager() *Manager {
-	return &Manager{
-		clients: make(ClientList),
+	m := &Manager{
+		clients:  make(ClientList),
+		handlers: make(map[string]EventHandler),
 	}
+
+	m.setupEventHandlers()
+	return m
+}
+
+func (m *Manager) setupEventHandlers() {
+	m.handlers[EventSendMessage] = sendMessage
+}
+
+func sendMessage(event Event, c *Client) error {
+	log.Println(event)
+	return nil
+}
+
+func (m *Manager) routeEvent(event Event, c *Client) error {
+	if handler, ok := m.handlers[event.Type]; ok {
+		if err := handler(event, c); err != nil {
+			return err
+		}
+		return nil
+	}
+	return errors.New("there is no such event type")
 }
 
 func (m *Manager) serveWS(w http.ResponseWriter, r *http.Request) {
